@@ -1,0 +1,49 @@
+{
+  "variables": {
+    "repo": "alanrickman",
+    "name": "vagrant-k8s-box",
+    "out_dir": "output-vagrant",
+    "access_token": null,
+    "version": null
+  },
+
+  "builders": [
+    {
+      "communicator": "ssh",
+      "source_path": "ubuntu/bionic64",
+      "provider": "virtualbox",
+      "type": "vagrant",
+      "add_force": true
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E sh -eux '{{.Path}}'",
+      "scripts": [
+        "scripts/provision/provision_vm.bash",
+        "scripts/provision/install_docker.bash",
+        "scripts/provision/install_k8s_tools.bash"
+      ]
+    }
+  ],
+
+  "post-processors": [
+    [
+      {
+        "type": "vagrant-cloud",
+        "box_tag": "{{user `repo`}}/{{user `name`}}",
+        "access_token": "{{user `access_token`}}",
+        "version": "{{user `version`}}"
+      },
+      {
+        "type": "shell-local",
+        "environment_vars": ["OUTDIR={{user `out_dir`}}","REPO={{user `repo`}}","NAME={{user `name`}}","VERSION={{user `version`}}"],
+        "execute_command": [ "/bin/bash", "-c", "{{.Vars}} {{.Script}}" ],
+        "script": "./scripts/post/add_box.bash"
+      }
+    ]
+  ]
+
+}
